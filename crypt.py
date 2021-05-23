@@ -175,13 +175,14 @@ def crypt_modifier_outgoing(data, modifier, server_name, string):
     target = "%s/%s" % (server_name, match.group(3))
     cipher = crypt_ciphers.get(target.lower())
     command = match.group(1)
+    irc_cmd = match.group(2)
     message = match.group(4)
 
     if not cipher:
         return string
 
-    if modifier.endswith("_privmsg") and not crypt_last_msg_type.get(target, None):
-        crypt_print_notice(target, "Messages to %s are encrypted" % target)
+    if irc_cmd.upper() == "PRIVMSG" and not crypt_last_msg_type.get(target, None):
+        crypt_print_notice(target, "Messages to/from %s are encrypted" % target)
         crypt_last_msg_type[target] = True
 
     try:
@@ -204,11 +205,12 @@ def crypt_modifier_incoming(data, modifier, server_name, string):
 
     command = match.group(1)
     sent_by = match.group(2)
+    irc_cmd = match.group(4)
     sent_to = match.group(5)
     message = match.group(6)
     encrypted = (message.startswith("+OK ") or message.startswith("mcps "))
 
-    if modifier.endswith("_privmsg") and sent_to == weechat.info_get("irc_nick", server_name):
+    if irc_cmd.upper() == "PRIVMSG" and sent_to == weechat.info_get("irc_nick", server_name):
         target = "%s/%s" % (server_name, sent_by)
     else:
         target = "%s/%s" % (server_name, sent_to)
@@ -218,9 +220,9 @@ def crypt_modifier_incoming(data, modifier, server_name, string):
     if not cipher:
         return string
 
-    if modifier.endswith("_privmsg") and crypt_last_msg_type.get(target, None) != encrypted:
+    if irc_cmd.upper() == "PRIVMSG" and crypt_last_msg_type.get(target, None) != encrypted:
         status = "encrypted" if encrypted else "*not* encrypted"
-        crypt_print_notice(target, "Messages from %s are %s" % (target, status))
+        crypt_print_notice(target, "Messages to/from %s are %s" % (target, status))
         crypt_last_msg_type[target] = encrypted
 
     if not encrypted:
