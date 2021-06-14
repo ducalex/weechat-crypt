@@ -31,7 +31,7 @@ SCRIPT_VERSION   = "1.0"
 SCRIPT_LICENSE   = "GPL3"
 SCRIPT_DESC      = "End-to-end encryption for weechat (Mircryption, Blowcrypt, AES)"
 SCRIPT_HELP_TEXT = (
-    "     listkeys: List all keys (default)\n"
+    "     listkeys: List all keys\n"
     "       setkey: Set key for target\n"
     "       delkey: Delete key for target\n"
     "    sendplain: Send unencrypted message on current buffer\n"
@@ -249,7 +249,7 @@ def crypt_bar_item_update(data, item, window, buffer, extra_info):
 
 def crypt_cmd_crypt(data, buffer, args):
     argv = args.split(" ")
-    command = argv.pop(0) or "listkeys"
+    command = argv.pop(0)
 
     server_name = weechat.buffer_get_string(buffer, "localvar_server")
     buffer_name = weechat.buffer_get_string(buffer, "localvar_channel")
@@ -264,7 +264,9 @@ def crypt_cmd_crypt(data, buffer, args):
                 weechat.prnt(buffer, "\t    %s: mode=%d, key=%s" % (target, cipher.mode, cipher.key))
 
     elif command == "setkey":
-        if len(argv) != 2: return weechat.WEECHAT_RC_ERROR
+        if len(argv) != 2:
+            weechat.prnt(buffer, f"Incorrect number of arguments.")
+            return weechat.WEECHAT_RC_ERROR
         target = argv[0] if argv[0].count('/') else "%s/%s" % (server_name, argv[0])
         if target[0] == '/':
             weechat.prnt(buffer, f"Could not determinate server")
@@ -273,7 +275,9 @@ def crypt_cmd_crypt(data, buffer, args):
         weechat.prnt(buffer, "Set key for %s to %s" % (target, argv[-1]))
 
     elif command == "delkey":
-        if len(argv) != 1: return weechat.WEECHAT_RC_ERROR
+        if len(argv) != 1:
+            weechat.prnt(buffer, f"Incorrect number of arguments.")
+            return weechat.WEECHAT_RC_ERROR
         target = argv[0] if argv[0].count('/') else "%s/%s" % (server_name, argv[0])
         if target[0] == '/':
             weechat.prnt(buffer, f"Could not determinate server")
