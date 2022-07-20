@@ -21,7 +21,7 @@ import weechat, struct, base64, os, re
 try:
     import Crypto.Cipher.Blowfish
 except ImportError:
-    exit("PyCrypto is required for this script")
+    Crypto = None
 
 
 # Constants
@@ -91,11 +91,13 @@ class Cipher:
     MODE_MODERN_AES = 3
 
     def __init__(self, key=None, mode=MODE_MIRCRYPTION):
-        self.key = key
+        self.key = key.encode() if type(key) is str else key
         self.mode = mode
 
     # TO DO: It might be possible to cache the ciphers and reuse them...
     def cipher(self, mode, iv=None):
+        if Crypto is None:
+            raise(Exception("Crypto module missing. Please run `pip install cryptodome`!"))
         if mode == self.MODE_MIRCRYPTION:
             return Crypto.Cipher.Blowfish.new(self.key, Crypto.Cipher.Blowfish.MODE_CBC, iv)
         return Crypto.Cipher.Blowfish.new(self.key, Crypto.Cipher.Blowfish.MODE_ECB)
@@ -188,7 +190,7 @@ def crypt_modifier_outgoing(data, modifier, server_name, string):
     try:
         return b"%s%s" % (command.encode(), cipher.pack_msg(message))
     except Exception as e:
-        crypt_print_error(target, f"Encryption failed: {repr(e)}. (Message not sent)", True)
+        crypt_print_error(target, f"Encryption failed: {repr(e)}. (Message not sent)")
         return b""
 
 
@@ -231,7 +233,7 @@ def crypt_modifier_incoming(data, modifier, server_name, string):
     try:
         return b"%s%s" % (command.encode(), cipher.unpack_msg(message))
     except Exception as e:
-        crypt_print_error(target, f"Decryption failed: {repr(e)}", True)
+        crypt_print_error(target, f"Decryption failed: {repr(e)}")
         return string
 
 
